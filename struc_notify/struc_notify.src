@@ -1,0 +1,49 @@
+&ACCESS RVP
+&REL 8
+&PARAM EDITMASK = *
+&PARAM TEMPLATE = C:\KRC\Roboter\Template\vorgabe
+DEF struc_notify( )
+;description of structure
+struc my_struc char name[20],char job[15], int age
+;declartion users' structure variables
+decl my_struc per1,per2
+int info_number
+;FOLD INI;%{PE}
+  ;FOLD BASISTECH INI
+    GLOBAL INTERRUPT DECL 3 WHEN $STOPMESS==TRUE DO IR_STOPM ( )
+    INTERRUPT ON 3 
+    BAS (#INITMOV,0 )
+  ;ENDFOLD (BASISTECH INI)
+  ;FOLD USER INI
+    ;Make your modifications here
+
+  ;ENDFOLD (USER INI)
+;ENDFOLD (INI)
+;counter of info message
+info_number=1
+;first type of intialization 
+per1={name[] "Vasiliy",job[] "teacher", age 29}
+;second type of initialization
+per2.name[]="Andrey"
+per2.job[]="engineer"
+per2.age=24
+;functions calls
+printInfo(per1,info_number)
+printInfo(per2,info_number)
+
+
+END
+def printInfo(person:in,mC:out)
+decl my_struc person
+decl int mC
+;name info message
+msgnotify("Person name:%1","Name info",,person.name[],mC)
+mC=mC+1
+;work info message
+msgnotify("Person work:%1","Work info",,person.job[],mC)
+mC=mC+1
+;age info message
+msgnotify("Person age:%1","Age info",person.age,,mC)
+mC=mC+1
+
+end

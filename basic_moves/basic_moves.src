@@ -1,0 +1,107 @@
+&ACCESS RVO
+&REL 19
+&PARAM EDITMASK = *
+&PARAM TEMPLATE = C:\KRC\Roboter\Template\vorgabe
+&PARAM DISKPATH = KRC:\R1\Program\demo_belay\simple
+DEF basic_moves()
+;moves with formulars
+;declaration of variables
+decl pos xtriangle,xpreC,xresC
+decl real dtriZ,dtriY,radius
+decl bool fTriangle_local,fCircle_local,start_point
+;FOLD INI;%{PE}
+  ;FOLD BASISTECH INI
+    GLOBAL INTERRUPT DECL 3 WHEN $STOPMESS==TRUE DO IR_STOPM ( )
+    INTERRUPT ON 3 
+    BAS (#INITMOV,0 )
+  ;ENDFOLD (BASISTECH INI)
+  ;FOLD USER INI
+    ;Make your modifications here
+
+  ;ENDFOLD (USER INI)
+;ENDFOLD (INI)
+;set your flags states here
+fTriangle_local=true
+fCircle_local=true
+start_point=false
+
+;FOLD SPTP HOME Vel=10 % DEFAULT ;%{PE}
+;FOLD Parameters ;%{h}
+;Params IlfProvider=kukaroboter.basistech.inlineforms.movement.spline; Kuka.IsGlobalPoint=False; Kuka.PointName=HOME; Kuka.BlendingEnabled=False; Kuka.MoveDataPtpName=DEFAULT; Kuka.VelocityPtp=10; Kuka.VelocityFieldEnabled=True; Kuka.ColDetectFieldEnabled=True; Kuka.CurrentCDSetIndex=0; Kuka.MovementParameterFieldEnabled=True; IlfCommand=SPTP
+;ENDFOLD
+SPTP XHOME WITH $VEL_AXIS[1] = SVEL_JOINT(10.0), $TOOL = STOOL2(FHOME), $BASE = SBASE(FHOME.BASE_NO), $IPO_MODE = SIPO_MODE(FHOME.IPO_FRAME), $LOAD = SLOAD(FHOME.TOOL_NO), $ACC_AXIS[1] = SACC_JOINT(PDEFAULT), $APO = SAPO_PTP(PDEFAULT), $GEAR_JERK[1] = SGEAR_JERK(PDEFAULT), $COLLMON_TOL_PRO[1] = USE_CM_PRO_VALUES(0)
+;ENDFOLD
+
+;FOLD SPTP P1 Vel=10 % PDAT1 Tool[1]:Freza Base[0] ;%{PE}
+;FOLD Parameters ;%{h}
+;Params IlfProvider=kukaroboter.basistech.inlineforms.movement.spline; Kuka.IsGlobalPoint=False; Kuka.PointName=P1; Kuka.BlendingEnabled=False; Kuka.MoveDataPtpName=PDAT1; Kuka.VelocityPtp=10; Kuka.VelocityFieldEnabled=True; Kuka.ColDetectFieldEnabled=True; Kuka.CurrentCDSetIndex=0; Kuka.MovementParameterFieldEnabled=True; IlfCommand=SPTP
+;ENDFOLD
+SPTP XP1 WITH $VEL_AXIS[1] = SVEL_JOINT(10.0), $TOOL = STOOL2(FP1), $BASE = SBASE(FP1.BASE_NO), $IPO_MODE = SIPO_MODE(FP1.IPO_FRAME), $LOAD = SLOAD(FP1.TOOL_NO), $ACC_AXIS[1] = SACC_JOINT(PPDAT1), $APO = SAPO_PTP(PPDAT1), $GEAR_JERK[1] = SGEAR_JERK(PPDAT1), $COLLMON_TOL_PRO[1] = USE_CM_PRO_VALUES(0)
+;ENDFOLD
+
+if start_point then;announcement if
+;FOLD SLIN P2 Vel=0.2 m/s CPDAT1 Tool[1]:Freza Base[0] ;%{PE}
+;FOLD Parameters ;%{h}
+;Params IlfProvider=kukaroboter.basistech.inlineforms.movement.spline; Kuka.IsGlobalPoint=False; Kuka.PointName=P2; Kuka.BlendingEnabled=False; Kuka.MoveDataName=CPDAT1; Kuka.VelocityPath=0.2; Kuka.VelocityFieldEnabled=True; Kuka.ColDetectFieldEnabled=True; Kuka.CurrentCDSetIndex=0; Kuka.MovementParameterFieldEnabled=True; IlfCommand=SLIN
+;ENDFOLD
+SLIN XP2 WITH $VEL = SVEL_CP(0.2, , LCPDAT1), $TOOL = STOOL2(FP2), $BASE = SBASE(FP2.BASE_NO), $IPO_MODE = SIPO_MODE(FP2.IPO_FRAME), $LOAD = SLOAD(FP2.TOOL_NO), $ACC = SACC_CP(LCPDAT1), $ORI_TYPE = SORI_TYP(LCPDAT1), $APO = SAPO(LCPDAT1), $JERK = SJERK(LCPDAT1), $COLLMON_TOL_PRO[1] = USE_CM_PRO_VALUES(0)
+;ENDFOLD
+endif;ending if
+
+;triangle with line moving type
+if fTriangle_local then
+;set your triangle deltas
+dtriZ=300
+dtriY=200
+
+;high of triangle
+xtriangle=xp2
+$vel.cp=0.2
+slin xtriangle
+
+;first side of triangle
+xtriangle.z=xtriangle.z-dtriZ
+xtriangle.y=xtriangle.y-dtriY
+$vel.cp=0.2
+slin xtriangle
+
+;second side of triangle
+xtriangle.y=xtriangle.y+(dtriY*2)
+$vel.cp=0.2
+slin xtriangle
+
+;third side of triangle
+xtriangle.z=xtriangle.z+dtriZ
+xtriangle.y=xtriangle.y-dtriY
+$vel.cp=0.2
+slin xtriangle
+endif
+
+;circle with circle moving type
+if fCircle_local then
+;set your value for radius
+radius=100
+;set pre and act points values from startpoint
+xpreC=xp2
+xresC=xp2
+;correct values of positons for a first half of circle
+xpreC.y=xpreC.y-radius
+xpreC.z=xpreC.z-radius
+xresC.Z=xresC.z-radius*2
+$vel.cp=0.2
+scirc xpreC,xresC
+;correct values of positons for a second half of circle
+xpreC.y=xpreC.y+radius*2
+xresC.Z=xresC.z+radius*2
+$vel.cp=0.2
+scirc xpreC,xresC
+endif
+
+;FOLD SPTP HOME Vel=10 % DEFAULT ;%{PE}
+;FOLD Parameters ;%{h}
+;Params IlfProvider=kukaroboter.basistech.inlineforms.movement.spline; Kuka.IsGlobalPoint=False; Kuka.PointName=HOME; Kuka.BlendingEnabled=False; Kuka.MoveDataPtpName=DEFAULT; Kuka.VelocityPtp=10; Kuka.VelocityFieldEnabled=True; Kuka.ColDetectFieldEnabled=True; Kuka.CurrentCDSetIndex=0; Kuka.MovementParameterFieldEnabled=True; IlfCommand=SPTP
+;ENDFOLD
+SPTP XHOME WITH $VEL_AXIS[1] = SVEL_JOINT(10.0), $TOOL = STOOL2(FHOME), $BASE = SBASE(FHOME.BASE_NO), $IPO_MODE = SIPO_MODE(FHOME.IPO_FRAME), $LOAD = SLOAD(FHOME.TOOL_NO), $ACC_AXIS[1] = SACC_JOINT(PDEFAULT), $APO = SAPO_PTP(PDEFAULT), $GEAR_JERK[1] = SGEAR_JERK(PDEFAULT), $COLLMON_TOL_PRO[1] = USE_CM_PRO_VALUES(0)
+;ENDFOLD
+
+END
